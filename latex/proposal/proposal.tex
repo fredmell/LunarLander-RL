@@ -1,0 +1,58 @@
+\documentclass[letterpaper, 11pt]{article}
+
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper,margin=0.75in]{geometry}
+\usepackage{textcomp}
+\usepackage[english]{babel}
+\usepackage{indentfirst}
+\usepackage[pdftex]{graphicx}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\setlength\parindent{0pt}
+\usepackage{bbm}
+\usepackage{physics}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{graphicx}
+\usepackage{cite}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+}
+
+\title{\vspace{-1.5cm}CME216 - Project Proposal \\ Learning to play games using a DQN}
+\author{Frederik J. Mellbye - frederme}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% A general description of the project you envision
+
+\section{Introduction}
+Reinforcement Learning (RL) is a branch of Machine Learning in rapid development, with various potential applications in engineering. As an example, in robotics RL algorithms have created sophisticated behaviours that are challenging to engineer manually \cite{robotics}.
+
+In this project, the main goal is to use Q-learning with a DQN to solve the game Lunar Lander. This is related to the engineering problem of optimal control, in a simple 2D environment with a limited action space. There are two versions of the game, with discrete (thrust in discrete directions) and continous action spaces (thrust is a vector). At first I will use the discrete version. The game is conveniently available in the OpenAI gym toolkit.
+
+If time allows it, the same algorithm will be applied to other games. I would also like to explore Actor-Critic methods, and perhaps a DDQN. I will likely modify these additional topics as I learn more, if there is time. I will likely need these additional methods for the continous action space.
+
+\section{Relevant literature}
+Reinforcement learning has been used to solve many games. The famous Nature paper \cite{mnih2015humanlevel} used deep RL to learn how to play various Atari games. Complex games such as Chess and Shogi have been mastered with RL agents only playing against themselves \cite{chess}. Go was famously solved by AlphaGo, and chess mastered by AlphaZero.
+
+\section{Timeline}
+
+There are 4 weeks until the project deadline. I plan to have finished the code for the DQN and Lunar Lander in 2 weeks, i.e. May 25th. The first week after that will be used to explore additional topics. The final week will be used to create plots/figures write the final paper.
+
+\bibliography{references.bib}{}
+\bibliographystyle{plain}
+
+
+\end{document}
