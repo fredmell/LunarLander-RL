@@ -8,25 +8,25 @@ from agent import Agent
 from replay_buffer import ReplayBuffer
 from analyzer import Analyzer
 
-def main(M,
-         T,
-         minibatch_size=64,
-         train_after=20,
-         goal=250.0,
-         lag=100,
-         show=True):
+def main(M: int,
+         T: int,
+         minibatch_size: int = 64,
+         train_after: int = 20,
+         goal: float = 250.0,
+         lag: int = 100,
+         show: bool = True
+         ) -> None:
     """ Run M episodes of Q-learning on the discrete Lunar Lander environment.
 
     Args:
-        M (int) : Max number of episodes.
-        T (int) : Max episode length.
-        minibatch_size (int) : Size of minibatch of experiences to replay.
-            Defaults to 64, ideally use powers of 2 (for optimal GPU usage).
-        train_after (int) : Number of episodes to run before training the Q net.
-        goal (float) : Average score for having 'solved' the game. Defaults to
-            250.0, for which a successful landing needs to have occured.
-        lag (int) : Number of episodes used to compute the average score.
-        show(bool) : Indicates whether to show the episode window or not.
+        M              : Max number of episodes.
+        T              : Max episode length.
+        minibatch_size : Size of minibatch of experiences to replay. Ideally
+            use powers of 2 (for optimal GPU usage).
+        train_after    : Number of episodes to run before training the Q net.
+        goal           : Average score for having 'solved' the game.
+        lag            : Number of episodes used to compute the average score.
+        show           : Indicates whether to show the episode window or not.
 
     """
     total_rewards = []

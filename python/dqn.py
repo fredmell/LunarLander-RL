@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras import layers
+from typing import Iterable
 
 class DQN:
-    def __init__(self, obs_shape, n_actions, learning_rate=0.0002):
+    def __init__(self, obs_shape, n_actions, learning_rate : float = 0.0002):
         self.obs_shape = obs_shape
         self.n_actions = n_actions
 
@@ -12,15 +15,18 @@ class DQN:
 
         self.model = self.generate_model()
 
-    def generate_model(self, layer_sizes=(256, 128), activation='relu'):
+    def generate_model(self,
+                       layer_sizes: Iterable = (256, 128),
+                       activation: str = 'relu',
+                       ) -> tf.keras.Sequential:
         """ Generate the Keras NN.
 
         Args:
-            layer_sizes (iterable): Sizes of hidden layers.
-            activation (string) : Activation to use for all hidden layers.
+            layer_sizes : Sizes of hidden layers.
+            activation  : Activation to use for all hidden layers.
 
         Returns:
-            model (tf.keras.Sequential) : The tf.keras Q network model
+            model : The tf.keras Q network model
 
         """
         model = tf.keras.Sequential()
@@ -42,33 +48,32 @@ class DQN:
         """ Wrapper for keras predict, feeds input forward through the network.
 
         Args:
-            state (np.ndarray) : State observations with shape
-                (n_obs, self.obs_shape).
+            state : State observations with shape (n_obs, self.obs_shape).
 
         Returns:
-            Qs (np.ndarray) : Estimated Q values, one for each action, with
-                shape (n_obs, self.n_actions).
+            Qs : Estimated Q values, one for each action, shape
+                (n_obs, self.n_actions).
 
         """
         Qs = self.model.predict(state)
         return Qs
 
-    def update(self, states, targets):
+    def update(self, states:np.ndarray, targets:np.ndarray) -> None:
         """ Wrapper for calling fit, with input states and target targets.
         Performs one pass through the training set.
 
         Args:
-            states (np.ndarray) : State observations.
-            targets (np.ndarray) : Training targets.
+            states  : State observations.
+            targets : Training targets.
 
         """
         self.model.fit(states, targets, epochs=1, verbose=0)
 
-    def copy_weights(self, otherDQN):
+    def copy_weights(self, other:DQN) -> None:
         """ Set weights to a copy of those of otherDQN.
 
         Args:
-            otherDQN (DQN) : Q-network whose weights we copy and assign to self.
+            otherDQN : Q-network whose weights we copy and assign to self.
 
         """
-        self.model.set_weights(otherDQN.model.get_weights())
+        self.model.set_weights(other.model.get_weights())

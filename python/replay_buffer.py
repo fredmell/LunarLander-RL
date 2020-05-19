@@ -1,49 +1,57 @@
+import numpy as np
 import random
 
+from typing import Iterable
+
 class ReplayBuffer:
-    def __init__(self, N=100000):
+    def __init__(self, N: int = 100000):
         """ Create a replay buffer object, essentially wraps a list of
         (s,a,r,s') tuples.
 
         Args:
-            N (int): Size of the replay buffer
+            N: Size of the replay buffer
 
         """
         self.N = N
         self.buffer = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.buffer)
 
-    def store(self, s, a, r, s_, terminal):
+    def store(self,
+              state: np.ndarray,
+              action: int,
+              reward: float,
+              next_state: np.ndarray,
+              terminal: bool
+              ) -> None:
         """ Store a (s,a,r,s') tuple in the buffer. Removes the oldest
         observation if the buffer is full.
 
         Args:
-            s (np.array) : Observation at the current state.
-            a (int) : Integer indicating the action taken.
-            r (int) : Reward of (s,a) pair.
-            s_ (np.array) : Observation at the next state, after taking action
-                            a at state s.
-            terminal (bool) : Indicates if the state ended the episode.
+            state: Observation at the current state.
+            action: Integer indicating the action taken.
+            reward: Reward of (state,action,next state) triplet.
+            next_state: Observation at the next state.
+            terminal: Indicates if the episode ended from the transition.
 
         """
-        transition = (s, a, r, s_, terminal)
+        transition = (state, action, reward, next_state, terminal)
 
         if len(self.buffer) == self.N:
             del self.buffer[0]
 
         self.buffer.append(transition)
 
-    def sample(self, n):
+    def sample(self, n:int) -> Iterable:
         """ Sample a random minibatch of experiences from the buffer, with
         uniform probability.
 
         Args:
-            n (int) : Minibatch size (number of transitions).
+            n: Minibatch size (number of transitions).
 
         Returns:
-            batch (list) : Minibatch of n experience tuples.
+            batch: Minibatch of n experience tuples.
 
         """
         n = min(len(self.buffer), n)
