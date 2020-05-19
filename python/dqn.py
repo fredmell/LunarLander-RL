@@ -44,14 +44,14 @@ class DQN:
 
         return model
 
-    def forward(self, state):
+    def forward(self, state: np.ndarray):
         """ Wrapper for keras predict, feeds input forward through the network.
 
         Args:
-            state : State observations with shape (n_obs, self.obs_shape).
+            state: State observations with shape (n_obs, self.obs_shape).
 
         Returns:
-            Qs : Estimated Q values, one for each action, shape
+            Qs: Estimated Q values for each action, shape
                 (n_obs, self.n_actions).
 
         """
@@ -63,17 +63,17 @@ class DQN:
         Performs one pass through the training set.
 
         Args:
-            states  : State observations.
-            targets : Training targets.
+            states: State observations.
+            targets: Training targets.
 
         """
         self.model.fit(states, targets, epochs=1, verbose=0)
 
     def copy_weights(self, other: DQN) -> None:
-        """ Set weights to a copy of those of otherDQN.
+        """ Set weights to a copy of those of other.
 
         Args:
-            otherDQN : Q-network whose weights we copy and assign to self.
+            other: Q-network whose weights we copy and assign to self.
 
         """
         self.model.set_weights(other.model.get_weights())
