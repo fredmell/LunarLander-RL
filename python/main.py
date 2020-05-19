@@ -6,57 +6,68 @@ import numpy as np
 
 from agent import Agent
 from replay_buffer import ReplayBuffer
+from analyzer import Analyzer
 
-T = 400 # Max number of steps per episode
-M = 2000  #
-minibatch_size = 64
-total_rewards = []
+def main(M, T, minibatch_size=64, goal=250.0, lag=100, show=True):
+    """ Run M episodes of Q-learning on the discrete Lunar Lander environment.
 
-env = gym.make("LunarLander-v2")
-env.reset()
+    Args:
+        M (int) : Max number of episodes.
+        T (int) : Max episode length.
+        minibatch_size (int) : Size of minibatch of experiences to replay.
+            Defaults to 64, ideally use powers of 2 (for optimal GPU usage).
+        goal (float) : Average score for having 'solved' the game. Defaults to
+            250.0, for which a successful landing needs to have occured.
+        lag (int) : Number of episodes used to compute the average score.
+            Defaults to 100.
+        show(bool) : Indicates whether to show the episodes or not. Defaults to
+            true.
 
-agent = Agent(env.observation_space, env.action_space)
-buffer = ReplayBuffer()
+    """
+    total_rewards = []
 
-done = False
-for episode in range(M):
-    state = env.reset()
-    rewards = []
-    for t in range(T):
-        # Interact with the environment
-        env.render()
-        action = agent.get_action(state)
-        next_state, reward, done, info = env.step(action)
+    env = gym.make("LunarLander-v2")
+    env.reset()
 
-        # Store the experience, sample experiences
-        buffer.store(state, action, reward, next_state, done)
+    agent = Agent(env.observation_space, env.action_space)
+    buffer = ReplayBuffer()
+    analyzer = Analyzer()
 
-        if episode > 0:
-            # Sample a minibatch and update the Q-network
-            minibatch = buffer.sample(minibatch_size)
-            agent.update(minibatch, episode)
+    for episode in range(M):
+        state = env.reset()
+        rewards = []
+        for t in range(T):
+            # Interact with the environment
+            env.render()
+            action = agent.get_action(state)
+            next_state, reward, done, info = env.step(action)
 
-        state = next_state
-        rewards.append(reward)
-        if done:
+            # Store the experience, sample experiences
+            buffer.store(state, action, reward, next_state, done)
+
+            # Sample from the experiences and use these to update the Q-network
+            if episode > 0:
+                minibatch = buffer.sample(minibatch_size)
+                agent.update(minibatch, episode)
+
+            state = next_state
+            rewards.append(reward)
+
+            # End the episode if it is over.
+            if done:
+                break
+
+        analyzer.save_episode(episode, sum(rewards), t)
+        analyzer.print_status(lag=lag)
+
+        if analyzer.average_reward(lag=lag) > goal:
+            print("Game solved!")
             break
 
-    total_rewards.append(sum(rewards))
-    rolling_mean = np.mean(total_rewards[-100:])
+    env.close()
+    analyzer.save_report()
 
-    if rolling_mean > 200:
-        print("Game solved!")
-        break
-
-    print("Episode {} - Total Reward {:.3f} - Avg. Reward {:.3f} - Buffer size {} - Episode steps {}".format(episode,
-                                                                 sum(rewards),
-                                                                 rolling_mean,
-                                                                 len(buffer),
-                                                                 t+1))
-
-
-env.close()
-
-rolling_mean_reward = [np.mean(total_rewards[(i - min(100,i)):i+1]) for i in len(total_rewards)]
-plt.plot(rolling_mean_reward)
-plt.show()
+if __name__ == '__main__':
+    M = 1500 # Max number of episodes
+    T = 400  # Max number of steps per episode
+    main(M, T)

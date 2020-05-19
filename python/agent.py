@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 class Agent:
-    def __init__(self, observation_space, action_space, ϵ=1.0, γ=0.99, target_update_frequency=1000):
+    def __init__(self, observation_space, action_space, ϵ=1.0, γ=0.99, C=1000):
         """
         Args:
             observation_space (...) : Observation space object
@@ -17,8 +17,9 @@ class Agent:
         self.ϵ0 = ϵ
         self.ϵ = self.ϵ0
         self.γ = γ
-        self.C = target_update_frequency
+        self.C = C
 
+        # See Double DQN paper in report references.
         self.Q_online = dqn.DQN(self.observation_space.shape, self.action_space.n)
         self.Q_target = dqn.DQN(self.observation_space.shape, self.action_space.n)
         self.Q_target.copy_weights(self.Q_online)
@@ -48,9 +49,6 @@ class Agent:
             actions[i] = a
             d[i] = 1 - terminal
             rewards[i] = r
-
-        # next_states = np.array(next_states).reshape(len(minibatch), self.observation_space.shape[0])
-        # states = np.array(states).reshape(len(minibatch), self.observation_space.shape[0])
 
         Q = self.Q_target.model.predict(states)
         Q_next = self.Q_target.model.predict(next_states)
