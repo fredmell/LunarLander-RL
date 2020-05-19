@@ -43,7 +43,7 @@ class ReplayBuffer:
 
         self.buffer.append(transition)
 
-    def sample(self, n:int) -> Iterable:
+    def sample(self, n: int) -> Iterable:
         """ Sample a random minibatch of experiences from the buffer, with
         uniform probability.
 

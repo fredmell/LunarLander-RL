@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 from typing import Iterable
 
 class DQN:
-    def __init__(self, obs_shape, n_actions, learning_rate : float = 0.0002):
+    def __init__(self, obs_shape, n_actions, learning_rate: float = 0.0002):
         self.obs_shape = obs_shape
         self.n_actions = n_actions
 
@@ -58,7 +58,7 @@ class DQN:
         Qs = self.model.predict(state)
         return Qs
 
-    def update(self, states:np.ndarray, targets:np.ndarray) -> None:
+    def update(self, states: np.ndarray, targets: np.ndarray) -> None:
         """ Wrapper for calling fit, with input states and target targets.
         Performs one pass through the training set.
 
@@ -69,7 +69,7 @@ class DQN:
         """
         self.model.fit(states, targets, epochs=1, verbose=0)
 
-    def copy_weights(self, other:DQN) -> None:
+    def copy_weights(self, other: DQN) -> None:
         """ Set weights to a copy of those of otherDQN.
 
         Args:

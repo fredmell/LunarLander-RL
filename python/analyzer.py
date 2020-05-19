@@ -14,7 +14,7 @@ class Analyzer:
         self.rewards.append(reward)
         self.episode_lengths.append(length)
 
-    def print_status(self, lag : int = 100) -> None:
+    def print_status(self, lag: int = 100) -> None:
         episode = self.episode_index[-1]
         reward = self.rewards[-1]
         steps = self.episode_lengths[-1]

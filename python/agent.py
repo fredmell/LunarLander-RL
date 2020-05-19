@@ -32,7 +32,7 @@ class Agent:
 
         self.update_counter = 0
 
-    def get_action(self, state:np.ndarray) -> int:
+    def get_action(self, state: np.ndarray) -> int:
         """ Given a state s, returns the action under the current policy.
 
         Args:
@@ -50,7 +50,7 @@ class Agent:
             Qs = self.Q_online.forward(state)
             return np.argmax(Qs)
 
-    def update(self, minibatch:list, episode:int) -> None:
+    def update(self, minibatch: list, episode: int) -> None:
         """ Update the agent given a minibatch of experiences. Performs one
         pass over the minibatch to update the online network, using the target
         network to compute the targets. Anneals ϵ linearly, and updates the
@@ -90,6 +90,6 @@ class Agent:
         if self.update_counter % self.C == 0:
             self.Q_target.copy_weights(self.Q_online)
 
-    def update_ϵ(self, episode:int) -> None:
+    def update_ϵ(self, episode: int) -> None:
         decay_until = 1000
         self.ϵ = max((self.ϵ0 * (1 - episode/decay_until), 0.01))
