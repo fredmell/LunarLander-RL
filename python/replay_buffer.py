@@ -8,6 +8,9 @@ class ReplayBuffer:
         """ Create a replay buffer object, essentially wraps a list of
         (s,a,r,s') tuples.
 
+        TODO:
+        - Add priority replay
+
         Args:
             N: Size of the replay buffer
 

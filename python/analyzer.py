@@ -3,6 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pickle
 
+from pathlib import Path
+
 class Analyzer:
     def __init__(self):
         self.episode_index = []
@@ -22,17 +24,12 @@ class Analyzer:
             "Episode: {:4} - "
             "Total Reward: {:5.2f} - "
             "Avg. Reward: {:5.2f} - "
-            "Steps: {:3}").format(episode, reward, self.average_reward(lag), steps)
+            "Steps: {:3}").format(episode,
+                                  reward,
+                                  self.average_reward(lag),
+                                  steps)
 
         print(out)
 
     def average_reward(self, lag: int = 100) -> float:
         return np.mean(self.rewards[-lag:])
-
-    def save_report(self, filename: str = "analysis.pkl") -> None:
-        with open(filename, "wb") as outfile:
-            pickle.dump(self, outfile)
-
-    def load_report(self, filename: str) -> Analyzer:
-        with open(filename, "rb") as infile:
-            return pickle.load(infile)

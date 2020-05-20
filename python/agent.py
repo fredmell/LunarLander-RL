@@ -1,7 +1,10 @@
 import dqn
 import gym
-import random
 import numpy as np
+import pickle
+import random
+
+from pathlib import Path
 
 class Agent:
     def __init__(self,
