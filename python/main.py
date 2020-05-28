@@ -68,9 +68,9 @@ def main(M: int,
             break
 
     env.close()
-    analyzer.save_report()
+    analyzer.plot_training()
 
 if __name__ == '__main__':
-    M = 1500 # Max number of episodes
+    M = 10 # Max number of episodes
     T = 400  # Max number of steps per episode
     main(M, T)
