@@ -23,9 +23,12 @@
 % If accepted, instead use the following line for the camera-ready submission:
 \usepackage[accepted]{icml2020}
 
+\usepackage{mathtools}
+\usepackage{amsmath}
+
 % The \icmltitle you define below is probably too long as a header.
 % Therefore, a short form for the running title is supplied here:
-\icmltitlerunning{Something}
+\icmltitlerunning{Solving Lunar Lander with a DQN}
 
 \begin{document}
 
@@ -83,17 +86,89 @@ Gross violations will trigger corrections at the camera-ready phase.
 \section{Introduction}
 \label{introduction}
 
+Game playing important step in development of RL.
+
+Lunar Lander somewhat complicated in the following sense: Simple game inputs (thrust L/R/D), but need to perform multiple tasks to land successfully. Need to keep lander somewhat level, turn towards landing pad, smooth braking towards landing pad, understanding that no thrust is needed to finally land.
+
+Lunar Lander simple control environemnt, very applicable to engineering.
+
 \section{Background}
 \label{background}
 
+Nature paper. \cite{mnih2015humanlevel}
+
+Double DQN paper. \cite{Hasselt2016DeepRL}
+
 \section{Approach}
 \label{approach}
+Parameters Table~\ref{tbl:params}.
+
+Similar approach to \cite{Mnih2013PlayingAW}. Takes game state directly as input instead of screen pixel values, so does not consider vision.
+
+$\epsilon$-greedy: Linear annealing.
+
+\subsection{Deep Q-learning}
+
+\subsection{Double DQN}
+
+\subsection{Prioritized experience replay}
+
+\begin{algorithm}[tb]
+   \caption{Double Deep Q-learning.}
+   \label{alg:ddqn}
+\begin{algorithmic}[1]
+  \FOR{$\text{episode} = 1, \hdots, M$}
+    \STATE Observe $s_1$
+    \FOR{$t = 1, \hdots, T$}
+      \STATE Select action
+      \begin{align*}
+        a_t = \begin{cases}
+          \text{Random} & \text{with probability } \varepsilon \\
+          \arg \max_a Q(s_t, a; \theta) & \text{otherwise}
+        \end{cases}
+      \end{align*}
+      \STATE Perform action $a_t$ and observe $r_t$ and $s_{t+1}$
+      \STATE Store experience tuple $(s_{t}, a_{t}, r_{t}, s_{t+1})$ in $\mathcal{D}$
+      \STATE Sample random minibatch of transitions $(s_j, a_j, r_j, s_{j+1})$
+      \STATE Set targets $y_j = $
+      \begin{align*}
+        \begin{cases}
+          r_j & \text{If episode was terminal} \\
+          r_j + \gamma \max_{a'} Q(s_{j+1}, a'; \theta^{-}) & \text{otherwise}
+        \end{cases}
+      \end{align*}
+      \STATE Perform one epoch of gradient descent with loss $(y_j - Q(s_j, a_j; \theta))^2$ w.r.t. $\theta$
+      \STATE Reset $\theta^{-} = \theta$ every $C$ steps.
+    \ENDFOR
+  \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{table*}
+  \centering
+  \caption{Parameters used to solve Lunar Lander.}
+  \label{tbl:params}
+\begin{tabular}{*4l} \toprule
+\emph{Name}       & \emph{Symbol} & \emph{Value} & \emph{Description} \\ \midrule
+Max episode length                 & $T$ & 400 & \\
+Discount factor & $\gamma$ & 0.99   & \\
+Replay buffer size & & 100000 & Number of ($s,a,r,s'$) tuples stored \\
+Episodes before updates & & 20 & Episodes with uniform policy before training \\
+Target network update frequency & $C$ & 1000 & \\
+Learning rate & $\alpha$ & 0.0002 & \\
+Initial exploration & $\varepsilon_0$ & 1.0 & \\
+Final exploration & $\varepsilon_{\text{final}}$ & 0.01 & \\
+Final exploration episode & & 1000 & Episodes with linearly decaying exploration \\ \bottomrule
+\end{tabular}
+\end{table*}
 
 \section{Results}
 \label{results}
+Figure with total and average reward vs episodes.
 
 \section{Conclusion}
 \label{conclusion}
+Neural network architecture important. Too simple: Insufficient complexity in representation of all actions, too complex: Training too slow/not stable.
 
 
 % In the unusual situation where you want a paper to appear in the
