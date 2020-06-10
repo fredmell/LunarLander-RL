@@ -8,6 +8,9 @@ import seaborn as sns
 from pathlib import Path
 from typing import Optional
 
+sns.set()
+sns.set_style("whitegrid")
+
 class Analyzer:
     def __init__(self):
         self.episode_index = []
@@ -65,23 +68,25 @@ class Analyzer:
         else:
             return np.mean(self.rewards[max(i-lag,0):i+1])
 
-    def plot_training(self, lag: int = 100) -> None:
+    def plot_training(self, filename: str, lag: int = 100) -> None:
         """ Plot the training process.
 
         """
-        fig, ax = plt.subplots()
+        path = Path(filename)
+
+        fig, ax = plt.subplots(tight_layout=True)
         sns.set()
 
-        ax.plot(self.episode_index, self.rewards, alpha=.3)
+        ax.plot(self.episode_index, self.rewards, alpha=.8, label="Reward")
         average_rewards = [self.average_reward(lag=lag, i=i)
                            for i in range(len(self.episode_index))]
 
         ax.plot(self.episode_index,
                 average_rewards,
-                label=f"Avg. Reward past {lag} episodes")
+                label="Avg. Reward")
 
-        ax.set_xlabel("Episode")
         ax.set_ylabel("Reward")
+        ax.set_xlabel("Episode")
         ax.legend()
 
-        plt.show()
+        fig.savefig(path)

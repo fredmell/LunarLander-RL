@@ -5,11 +5,15 @@ import pickle
 import random
 
 from pathlib import Path
+from typing import Iterable
 
 class Agent:
     def __init__(self,
                  observation_space: gym.spaces.box.Box,
                  action_space: gym.spaces.discrete.Discrete,
+                 hidden_layers: Iterable = (256, 128),
+                 η: float = 0.0002,
+                 optimizer: str = "Adam",
                  ϵ: float = 1.0,
                  γ: float = 0.99,
                  C: int = 1000):
@@ -29,8 +33,17 @@ class Agent:
         self.C = C
 
         # Keep separate online and target networks (see DDQN paper).
-        self.Q_online = dqn.DQN(self.observation_space.shape, self.action_space.n)
-        self.Q_target = dqn.DQN(self.observation_space.shape, self.action_space.n)
+        self.Q_online = dqn.DQN(self.observation_space.shape,
+                                self.action_space.n,
+                                learning_rate=η,
+                                hidden_layers=hidden_layers,
+                                optimizer="SGD")
+
+        self.Q_target = dqn.DQN(self.observation_space.shape,
+                                self.action_space.n,
+                                learning_rate=η,
+                                hidden_layers=hidden_layers)
+
         self.Q_target.copy_weights(self.Q_online)
 
         self.update_counter = 0
