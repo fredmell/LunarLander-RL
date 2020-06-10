@@ -79,7 +79,7 @@
 % \printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
 
 \begin{abstract}
-A DQN is employed to solve the game Lunar Lander. The artificial neural network architecture is tuned over various learning rates and optimizers. The DQN agent successfully solves the game after around 1000 episodes of playing the game.
+A DQN is employed to solve the game Lunar Lander. The artificial neural network architecture is tuned over various learning rates and optimizers. The final DQN agent successfully solves the game after around 1000 episodes of playing the game. The analysis determines learning rates that lead to fast initial learning, and shows that the choice of optimizer has little effect on the rate of improvement. The performance of the agent also depends on the ANN structure, where a wide network with two hidden layers is favored.
 \end{abstract}
 
 \section{Introduction}
@@ -111,7 +111,26 @@ In many nonlinear control applications the dynamics are nonlinear and challengin
 \label{background}
 This section walks through some of the basics of Deep Q-learning that were used to acheive human level play in Atari games.
 
-\subsection{Reinforcement learning}
+\subsection{Preliminaries}
+In RL systems are commonly modeled as a Markov Decision Process (MDP), with an environment and agent states $s \in \mathcal{S}$, a set of actions $\mathcal{A}$, transition probabilities $P(s, a, s') = \Pr(s_{t+1} = s' \mid s_t = s, a_t, a)$ and rewards $R(s, a, s')$ which are associated with transitions to $s'$ from $s$ with action $a$.
+
+It is common to define the return from time step $t$ as
+\begin{align*}
+  G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \hdots
+\end{align*}
+where $\gamma$ is the discount factor.
+
+The value function associated with a state $s$ under a policy $\pi$ is given by
+\begin{align*}
+  V^\pi (s) = \mathbb{E}[G_t \mid s_t = s]
+\end{align*}
+i.e. the expected return starting from a particular state.
+
+Similarly, the action-value of a state-action pair $(s,a)$ is the value of the state, given that the next action is $a$. The action value function is denoted $Q_\pi(s,a)$ and is given by:
+\begin{align*}
+  Q^\pi(s,a) = \mathbb{E}[G_t \mid s_t = s, a_t = a]
+\end{align*}
+The common goal in RL is find the policy $\pi$ that maximizes the expected return. Many approaches are available, such as Monte Carlo methods, Temporal Difference (TD) learning, Policy Gradient and Q-learning \cite{Sutton1998}.
 
 \subsection{Deep Q-learning}
 The Q-learning algorithm \cite{watkins} was one of the early breakthroughs of Reinforcement Learning. Defined by
@@ -152,8 +171,17 @@ The idea of double Q-learing can be applied to the DQN setting \cite{Hasselt2016
 \end{align*}
 The target network is updated every $C$ iterations. This is known as Double DQN. Using a target network is also crucial for stability of training in stochastic environments.
 
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=.6\linewidth]{images/architecture.png}
+  \caption{DQN architecture visualized, with fewer neurons per hidden layer than what is used in the project. Created using \url{http://alexlenail.me/NN-SVG/index.html}.}
+  \label{fig:archi}
+\end{figure}
+
 \subsection{Experience replay}
 Training neural networks commonly requires large amounts of data, here this corresponds to many experienced $(s,a,r,s')$ tuples. In experience replay, a buffer $\mathcal{D}$ of fixed size is used to hold experiences. In each time step a minibatch of experiences are sampled unformly with replacement from the buffer and used for training the network.
+
+Experience replay is used for multiple reasons. Firstly, it increases data efficiency - the same experiences are used to update the weights multiple times. Secondly, one likely gets better convergence behavior. The Q-updates are supervised learning updates, and when the targets are sampled from $\mathcal{D}$ we get closer to the fundamental i.i.d. assumption of supervised learning.
 
 \section{Approach}
 \label{approach}
@@ -163,17 +191,10 @@ The approach is described in detail in the following subsections and summarized 
 
 The parameter values used in \cite{mnih2015humanlevel} were first used as a baseline, and then tuned for better performance in the Lunar Lander environment.
 
-\begin{figure}
-  \centering
-  \includegraphics[width=.6\linewidth]{images/architecture.png}
-  \caption{DQN architecture visualized, with fewer neurons per hidden layer than what is used in the project. Created using \url{http://alexlenail.me/NN-SVG/index.html}.}
-  \label{fig:archi}
-\end{figure}
-
 \subsection{DQN architecture}
 Several neural network architectures are explored, varying the size and number of hidden layers. The function approximation needs to be sufficiently flexible to learn all the required behaviours: hovering, steering back towards the landing pad and carefully landing. However, if the network is too flexible (high variance), training will be unstable or require too large amounts of data. As in \cite{mnih2015humanlevel} ReLu activation is used for the hidden layers. The output layer has linear activation, since $Q(s,a) \in \mathbb{R}$.
 
-Experimentation was also performed with varying the learning rate and optimizer. Adam and Stochastic Gradient Descent (SGD) is compared with RMSProp, which was used in \cite{mnih2015humanlevel}.
+Experimentation was also performed with varying the learning rate and optimizer. Picking a good learning rate is crucial; too small learning rates leads to insuficcient gradient steps and too large learning rates lead to instabilities. Adam and Stochastic Gradient Descent (SGD) is compared with RMSProp, which was used in \cite{mnih2015humanlevel}. A grid search is performed across learning rates for different optimizers.
 
 \subsection{Reinforcement learning}
 
@@ -238,11 +259,11 @@ Final exploration episode & $n_\epsilon$ & 1000 & Episodes with linearly decayin
 
 \section{Results}
 \label{results}
-Figure~\ref{fig:lr} shows the mean reward after 200 episodes with different learning rates and optimizers. We see that ...
+Figure~\ref{fig:lr} shows the mean reward after 200 episodes with different learning rates and optimizers. We see that larger learning rates lead to faster early learning for all the optimizers. The optimizers perform very similarly.
 
 \begin{figure}[tb]
   \includegraphics[width=\linewidth]{figures/learning_rate.eps}
-  \caption{Mean reward after 200 episodes of training for different learning rates and optimizers. The mean of the last 100 episodes is used. RMSProp used the default $\rho = 0.9$.}
+  \caption{Mean reward after 200 episodes of training for different learning rates and optimizers. The mean of the last 100 episodes is used. RMSProp used the default $\rho = 0.9$. Larger learning rates had little improvement. Several runs should be used since these values could be affected by randomness, most of the early actions are random.}
   \label{fig:lr}
 \end{figure}
 
@@ -263,16 +284,21 @@ Notice the large amount of variation in total reward per episode. In some episod
 
 \section{Conclusion}
 \label{conclusion}
-A setup is found such that the agent plays the game very successfully.
+A setup is found such that the agent plays the game very well. Slight performance improvements are likely possible, in final performance (fewer crashes) and in the rate of improvement during training. Suggested improvements are described in Section~\ref{improve}.
 
-Neural network architecture important. Too simple: Insufficient complexity in representation of all actions, too complex: Training too slow/not stable.
+First of all, the results show how well the setup \cite{mnih2015humanlevel} performs over a vast array of games without the need for game-specific tuning.
+
+Second, the analysis shows how the rate of improvement and stability of improvement depends largely on the network structure and learning rate. A too simple network structure has high bias and is unable to translate the states to accurate action values, whereas a too complex structure induces high variance and likely overfit to the data.
+
+Finally, an appropriate learning rate was found. It was shown to give similar initial performance across the three optimizers (Adam, RMSProp and SGD).
 
 \section{Future directions}
+\label{improve}
 Many possible improvements are available in the literature. I believe using prioritized experience replay seems very interesting, since some states and action are more important than others \cite{Schaul2016PrioritizedER}. In particular, as an example, the lander spent a long time to learn to apply the action "no thrust" to finally land. When this occurs due to exploration the large instant reward of +200 gives a large estimated TD error. In prioritized experience replay we would sample this experience more frequently and hopefully learn the final part of landing faster.
 
-Another possible improvement is to actually use Double Q-learning, with two separate Q-networks parametrized by $\theta$ and $\theta'$. This could accellerate training as there could still be maximization bias with the target network.
+Another possible improvement is to actually use Double Q-learning, with two separate Q-networks parametrized by $\theta$ and $\theta'$. This could accelerate training as there could still be maximization bias with the target network.
 
-Finally, future work should perform more extensive tuning of the current setup to decrease the number of episodes/updates required to solve the game. Neural network structures could be explored more extensively and rigorously. Additionaly other tweaks could be attempted, such as adding momentum to the solvers.
+Finally, future work should perform more extensive tuning of the current setup to decrease the number of episodes/updates required to solve the game. Neural network structures could be explored more extensively and rigorously. It is likely that there exist smaller network structures with fewer parameters that solve the game, with the added advantage of less compute time. Much deeper network structures with much fewer neurons per layer could also be explored. Additionaly other tweaks could be attempted, such as adding momentum to the solvers.
 
 
 % In the unusual situation where you want a paper to appear in the

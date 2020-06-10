@@ -27,6 +27,7 @@ def run(M: int,
         goal           : Average score for having 'solved' the game.
         lag            : Number of episodes used to compute the average score.
         learning_rate  : Learning rate for optimizer
+        optimizer      : Chosen optimizer, options: "RMSProp", "Adam", "SGD"
         show           : Indicates whether to show the episode window or not.
 
     Returns:
