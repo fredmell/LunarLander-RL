@@ -88,33 +88,85 @@ Gross violations will trigger corrections at the camera-ready phase.
 
 Game playing important step in development of RL.
 
-Lunar Lander somewhat complicated in the following sense: Simple game inputs (thrust L/R/D), but need to perform multiple tasks to land successfully. Need to keep lander somewhat level, turn towards landing pad, smooth braking towards landing pad, understanding that no thrust is needed to finally land.
+Lunar Lander is a simple 2D control environment available in OpenAI gym \cite{gym}. The goal is to successfully land a lander on a target pad, always located at the origin. See Figure~\ref{fig:screenshot} for the game interface.
+
+At each time step $t$, the current state is revealed to the agent playing the game. It is given by
+\begin{align}
+  s_t = \begin{bmatrix} x & y & v_x & v_y & \phi & \omega & l_1 & l_ 2 \end{bmatrix}
+\end{align}
+where $(x,y)$ is the position, $(v_x, v_y)$ is the velocity, $\phi$ is the angle of rotation, $\omega$ is the angular velocity and $l_1, l_2 \in \{ 0,1 \}$ indicate whether the left and right legs are touching the surface.
+
+Four actions are available at each time step: do nothing, fire left engine, fire right engine and fire main thruster.
 
 Lunar Lander simple control environemnt, very applicable to engineering.
+
+Lunar Lander somewhat complicated in the following sense: Simple game inputs (thrust L/R/D), but need to perform multiple tasks to land successfully. Need to keep lander somewhat level, turn towards landing pad, smooth braking towards landing pad, understanding that no thrust is needed to finally land.
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{images/screenshot.png}
+  \caption{Screenshot from the Lunar Lander game.}
+  \label{fig:screenshot}
+\end{figure}
 
 \section{Background}
 \label{background}
 
 Nature paper. \cite{mnih2015humanlevel}
 
-Double DQN paper. \cite{Hasselt2016DeepRL}
+Very great success.
 
 \section{Approach}
 \label{approach}
-Parameters Table~\ref{tbl:params}.
+In this project the approach follows closely \cite{Mnih2013PlayingAW}, with a minor simplification, namely that the states are not given by the pixel values on the screen. There is thus no need for convolutional layers in the architecture.
 
-Similar approach to \cite{Mnih2013PlayingAW}. Takes game state directly as input instead of screen pixel values, so does not consider vision.
-
-$\epsilon$-greedy: Linear annealing.
+The approach is described in detail in the following subsections and summarized in Algorithm~\ref{alg:ddqn}. The parameter values that were used to successfully solve the game are shown in Table~\ref{tbl:params}.
 
 \subsection{Deep Q-learning}
+The Q-learning algorithm \cite{watkins} was one of the early breakthroughs of Reinforcement Learning. Defined by
+\begin{align}
+  \label{eq:Qlearning}
+  Q(s_t, a_t) \gets Q(s_t, a_t) + \alpha \Big[ r_t + \gamma \max_a Q(s_t, a) - Q(s_t, a_t)\Big]
+\end{align}
+Q-learning learns $Q$, which approximates the optimal action-value function $q^*$.
+
+In most applications a tabular representation of $Q(s,a) \forall s \in \mathcal{S}, a \in \mathcal{A}$ is infeasible. Instead a function approximator is commonly used. An important case
+
+Artificial neural networks (ANNs) are commonly used for nonlinear function approximation. In Deep Q-learning a neural network $Q$ approximates the action value function \cite{Sutton1998}, in that for a given state $s$ it outputs a vector of action values $Q(s,\cdot; \theta)$.
+
+Since $Q$ maps state-action pairs to estimates of their values, a straight forward approach is to have the neural network take the state and action as input. An issue with this approach is that a separate forward pass is required to compute the value for each action. A more efficient approach uses an architecture with one output for each possible action, since only one forward pass is required to compute values for all actions \cite{mnih2015humanlevel}.
+
+A fundamental aspect of Reinforcement Learning is the tradeoff of exploration and exploitation. To ensure adequate exploration $\epsilon$-greedy is commonly used: Take a random action with probability $\epsilon$
+and the greedy action $\underset{a}{\arg \max} Q(s,a)$ otherwise. This gives the policy
+\begin{align*}
+  \pi_\theta (s) =
+  \begin{cases}
+    \text{random}                   & \text{with probability } \epsilon \\
+    \underset{a}{\arg \max} Q(s, a) & \text{otherwise}
+  \end{cases}
+\end{align*}
+
+In this project the exploration rate is linearly annealed from an initial exploration rate $\epsilon_0$ to $\epsilon_\text{final}$ over the course of $n_\epsilon$ episodes. The exploration is then kept at $\epsilon_\text{final}$.
 
 \subsection{Double DQN}
+Lunar Lander is a stochastic environment. Each episode has different moon surfaces, landing pad angles and importantly, the lander spawns with different initial translational and rotational positions and velocities.
 
-\subsection{Prioritized experience replay}
+In such environments, vanilla Q-learning commonly performs pooly due to large overestimations of action values. These overestimations result from inherent bias in Q-learning, the same value is used both to select and evaluate an action. Overestimated values are thus more likely to be picked.
+
+Double Q-learning maintains two value functions $\theta$ and $\theta'$, where $\theta$ is used for selecting actions and the $\theta'$ to evaluate those actions. This addresses the issue of maximization bias. Each experience is randomly assigned to update one of the value functions. The double Q-learning target is therefore
+\begin{align*}
+  R_{t+1} + \gamma Q(S_{t+1}, \arg \max_a Q(S_{t+1}, a; \theta_t); \theta'_t)
+\end{align*}
+The idea of double Q-learing can be applied to the DQN setting \cite{Hasselt2016DeepRL}. The evaluation network $\theta'$ is replaced by a target network $\theta^{-}$, a periodic copy of the online weights $\theta$. The target is therefore
+\begin{align*}
+  R_{t+1} + \gamma Q(S_{t+1}, \arg \max_a Q(S_{t+1}, a; \theta_t); \theta_t^{-})
+\end{align*}
+The target network is updated every $C$ iterations. This is known as Double DQN. Using a target network is also crucial for stability of training in stochastic environments.
+
+\subsection{Experience replay}
+Training neural networks commonly requires large amounts of data, here this corresponds to many experienced $(s,a,r,s')$ tuples. In experience replay, a buffer $\mathcal{D}$ of fixed size is used to hold experiences. In each time step a minibatch of experiences are sampled unformly with replacement from the buffer and used for training the network.
 
 \begin{algorithm}[tb]
-   \caption{Double Deep Q-learning.}
+   \caption{Double DQN.}
    \label{alg:ddqn}
 \begin{algorithmic}[1]
   \FOR{$\text{episode} = 1, \hdots, M$}
@@ -123,8 +175,8 @@ $\epsilon$-greedy: Linear annealing.
       \STATE Select action
       \begin{align*}
         a_t = \begin{cases}
-          \text{Random} & \text{with probability } \varepsilon \\
-          \arg \max_a Q(s_t, a; \theta) & \text{otherwise}
+          \text{Random} & \text{with probability } \epsilon \\
+          \underset{a}{\arg \max} Q(s_t, a; \theta) & \text{otherwise}
         \end{cases}
       \end{align*}
       \STATE Perform action $a_t$ and observe $r_t$ and $s_{t+1}$
@@ -133,11 +185,11 @@ $\epsilon$-greedy: Linear annealing.
       \STATE Set targets $y_j = $
       \begin{align*}
         \begin{cases}
-          r_j & \text{If episode was terminal} \\
+          r_j & \text{if } s_{t+1} \text{ terminal} \\
           r_j + \gamma \max_{a'} Q(s_{j+1}, a'; \theta^{-}) & \text{otherwise}
         \end{cases}
       \end{align*}
-      \STATE Perform one epoch of gradient descent with loss $(y_j - Q(s_j, a_j; \theta))^2$ w.r.t. $\theta$
+      \STATE Perform one pass of gradient descent over the minibatch with loss $(y_j - Q(s_j, a_j; \theta))^2$ w.r.t. $\theta$
       \STATE Reset $\theta^{-} = \theta$ every $C$ steps.
     \ENDFOR
   \ENDFOR
@@ -152,23 +204,40 @@ $\epsilon$-greedy: Linear annealing.
 \emph{Name}       & \emph{Symbol} & \emph{Value} & \emph{Description} \\ \midrule
 Max episode length                 & $T$ & 400 & \\
 Discount factor & $\gamma$ & 0.99   & \\
-Replay buffer size & & 100000 & Number of ($s,a,r,s'$) tuples stored \\
+Minibatch size &  & 64 & \\
+Replay buffer size & & 100000 & Number of ($s,a,r,s'$) tuples stored in $\mathcal{D}$ \\
 Episodes before updates & & 20 & Episodes with uniform policy before training \\
-Target network update frequency & $C$ & 1000 & \\
-Learning rate & $\alpha$ & 0.0002 & \\
-Initial exploration & $\varepsilon_0$ & 1.0 & \\
-Final exploration & $\varepsilon_{\text{final}}$ & 0.01 & \\
-Final exploration episode & & 1000 & Episodes with linearly decaying exploration \\ \bottomrule
+Target network update period & $C$ & 1000 & Update $\theta^{-} := \theta$ every $C$ iterations \\
+Learning rate & $\eta$ & 0.0002 & \\
+Initial exploration & $\epsilon_0$ & 1.0 & \\
+Final exploration & $\epsilon_{\text{final}}$ & 0.01 & \\
+Final exploration episode & $n_\epsilon$ & 1000 & Episodes with linearly decaying exploration \\ \bottomrule
 \end{tabular}
 \end{table*}
 
 \section{Results}
 \label{results}
-Figure with total and average reward vs episodes.
+Figure with total and average reward vs episodes. Figure~\ref{fig:training}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{figures/long_training.pdf}
+  \caption{Result}
+  \label{fig:training}
+\end{figure}
+
+Stages of training: Learns to hover, learns to steer towards center while hovering, learns to descend and finally learns to do no action when on the ground to finish landing.
+
+At the end: success very dependent on initial conditions + environment (if sent to the side and hilly it sometimes fail/even crashes)
 
 \section{Conclusion}
 \label{conclusion}
 Neural network architecture important. Too simple: Insufficient complexity in representation of all actions, too complex: Training too slow/not stable.
+
+\section{Future directions}
+- More extensive parameter tuning such that learning happens more rapidly: Use different optimizers, network structures, learning rates.
+
+- Prioritized experience replay seems interesting, since the learning phase has some very clear tasks to learn, in particular landing which gives 200 points. Prioritized experience replay would sample this event more frequently than others.
 
 
 % In the unusual situation where you want a paper to appear in the
